@@ -15,13 +15,14 @@ from moviepy.video.fx import Resize
 
 DEFAULT_JSON_FILE = "../storyboard_data.json"
 DEFAULT_OUTPUT_FILE = "final_render.mp4"
-ASSETS_DIR = "../assets"
+ASSETS_DIR = "../local_assets"
 TRANSITION_DURATION = 2.0
 FPS = 30
 
 # ==========================================
 # ANIMATION LIBRARY
 # ==========================================
+
 
 def ease_out_cubic(t):
     """Math helper: Makes movement fast at start, slow at end."""
@@ -106,6 +107,9 @@ def main():
             if not filename:
                  print(f"Warning: Object {obj_id} has no filename.")
                  continue
+            
+            # Handle API URLs (e.g. /api/images/foo.png -> foo.png)
+            filename = os.path.basename(filename)
                 
             path = os.path.join(ASSETS_DIR, filename)
             if not os.path.exists(path):
