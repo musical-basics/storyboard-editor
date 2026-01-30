@@ -1,19 +1,19 @@
 {
   "version": "1.0",
-  "exportedAt": "2026-01-30T07:25:07.845Z",
+  "exportedAt": "2026-01-30T08:14:40.053Z",
   "artboard": {
     "width": 360,
     "height": 640
   },
   "stages": [
     {
-      "id": "stage-1769757895813",
+      "id": "stage-1769758369391",
       "name": "Initial",
       "assets": [
         {
-          "id": "placed-1769757898284-hg09c9da8",
-          "assetUrl": "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop",
-          "filename": "fluffy-dog.jpg",
+          "id": "placed-1769758534944-sx56w46ms",
+          "assetUrl": "/api/images/Hand-C.png",
+          "filename": "Hand-C.png",
           "position": {
             "x": 120,
             "y": 260
@@ -26,9 +26,9 @@
           "layerOrder": 0
         },
         {
-          "id": "placed-1769757898568-b9ice8w94",
-          "assetUrl": "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=400&fit=crop",
-          "filename": "kitten.jpg",
+          "id": "placed-1769758618402-a03vehc3a",
+          "assetUrl": "/api/images/Hand-A.png",
+          "filename": "Hand-A.png",
           "position": {
             "x": 120,
             "y": 260
@@ -41,12 +41,12 @@
           "layerOrder": 1
         },
         {
-          "id": "placed-1769757899894-041tczxrh",
-          "assetUrl": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&h=400&fit=crop",
-          "filename": "golden-retriever.jpg",
+          "id": "placed-1769758620371-i4ov2qcwk",
+          "assetUrl": "/api/images/DS-6.5---zone-highlight.png",
+          "filename": "DS-6.5---zone-highlight.png",
           "position": {
-            "x": 120,
-            "y": 260
+            "x": 114,
+            "y": 492
           },
           "size": {
             "width": 120,
@@ -54,20 +54,35 @@
           },
           "rotation": 0,
           "layerOrder": 2
+        },
+        {
+          "id": "placed-1769758620803-eofl6v5d2",
+          "assetUrl": "/api/images/DS-6.5.png",
+          "filename": "DS-6.5.png",
+          "position": {
+            "x": 137,
+            "y": 16
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 3
         }
       ]
     },
     {
-      "id": "stage-1769757903173",
+      "id": "stage-1769758624386",
       "name": "Initial (copy)",
       "assets": [
         {
-          "id": "placed-1769757903172-kn4rhfxv2",
-          "assetUrl": "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop",
-          "filename": "fluffy-dog.jpg",
+          "id": "placed-1769758624386-2lj9jh9ls",
+          "assetUrl": "/api/images/Hand-C.png",
+          "filename": "Hand-C.png",
           "position": {
-            "x": 212,
-            "y": 366
+            "x": 0,
+            "y": 104
           },
           "size": {
             "width": 120,
@@ -77,12 +92,12 @@
           "layerOrder": 0
         },
         {
-          "id": "placed-1769757903173-fldwrqclh",
-          "assetUrl": "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=400&fit=crop",
-          "filename": "kitten.jpg",
+          "id": "placed-1769758624386-dl2nxp10z",
+          "assetUrl": "/api/images/Hand-A.png",
+          "filename": "Hand-A.png",
           "position": {
-            "x": 151,
-            "y": 43
+            "x": 226,
+            "y": 166
           },
           "size": {
             "width": 120,
@@ -92,12 +107,12 @@
           "layerOrder": 1
         },
         {
-          "id": "placed-1769757903173-algr32h4f",
-          "assetUrl": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&h=400&fit=crop",
-          "filename": "golden-retriever.jpg",
+          "id": "placed-1769758624386-6l0zy20pg",
+          "assetUrl": "/api/images/DS-6.5---zone-highlight.png",
+          "filename": "DS-6.5---zone-highlight.png",
           "position": {
-            "x": 55,
-            "y": 486
+            "x": 47,
+            "y": 387
           },
           "size": {
             "width": 120,
@@ -105,6 +120,21 @@
           },
           "rotation": 0,
           "layerOrder": 2
+        },
+        {
+          "id": "placed-1769758624386-ewfea84hd",
+          "assetUrl": "/api/images/DS-6.5.png",
+          "filename": "DS-6.5.png",
+          "position": {
+            "x": 228,
+            "y": 424
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 3
         }
       ]
     }

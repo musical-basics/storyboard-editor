@@ -15,7 +15,7 @@ from moviepy.video.fx import Resize
 
 DEFAULT_JSON_FILE = "../storyboard_data.json"
 DEFAULT_OUTPUT_FILE = "final_render.mp4"
-ASSETS_DIR = "../local_assets"
+ASSETS_DIR = "local_assets"
 TRANSITION_DURATION = 2.0
 FPS = 30
 
@@ -82,7 +82,8 @@ def main():
         clips = []
 
         # Background
-        total_duration = (len(stages) - 1) * TRANSITION_DURATION
+        # Each stage gets TRANSITION_DURATION seconds
+        total_duration = len(stages) * TRANSITION_DURATION
         if total_duration == 0: total_duration = 2.0
         
         print(f"DEBUG: Creating background for {total_duration}s...")
@@ -93,14 +94,27 @@ def main():
         print(f"DEBUG: Processing objects...")
         
         for obj_id in all_obj_ids:
-            # Find first occurrence to get filename/style
-            first_state = None
-            for s in stages:
-                state = get_obj_state(s, obj_id)
-                if state:
-                    first_state = state
-                    break
+            # --- STAGE VISIBILITY: Find which stages this object appears in ---
+            stage_indices = [i for i, s in enumerate(stages) if get_obj_state(s, obj_id)]
             
+            if not stage_indices:
+                continue
+            
+            first_stage_idx = min(stage_indices)
+            last_stage_idx = max(stage_indices)
+            
+            # Calculate timing
+            start_time = first_stage_idx * TRANSITION_DURATION
+            end_time = (last_stage_idx + 1) * TRANSITION_DURATION
+            if end_time > total_duration:
+                end_time = total_duration
+            obj_duration = end_time - start_time
+            
+            if obj_duration <= 0:
+                continue
+
+            # Find first occurrence to get filename/style
+            first_state = get_obj_state(stages[first_stage_idx], obj_id)
             if not first_state: continue
 
             filename = first_state.get('filename')
@@ -131,22 +145,34 @@ def main():
 
             base_w, base_h = get_size(first_state)
             
-            # Initial Resize
-            img_clip = img_clip.with_effects([Resize(new_size=(base_w, base_h))])
+            # --- RESIZE LOGIC (CONTAIN) ---
+            img_w, img_h = img_clip.size
+            scale_factor = min(base_w / img_w, base_h / img_h)
+            new_w = int(img_w * scale_factor)
+            new_h = int(img_h * scale_factor)
+            
+            img_content = img_clip.with_effects([Resize(new_size=(new_w, new_h))])
+            img_content = img_content.with_duration(obj_duration)
+            
+            img_clip = CompositeVideoClip([img_content.with_position("center")], size=(base_w, base_h))
+            img_clip = img_clip.with_duration(obj_duration)
             
             anim_style = first_state.get('animationStyle', 'fade_in')
 
-            # --- DYNAMIC POSITION LOGIC ---
-            def make_pos_func(oid, stages_list, dur_per_stage, style):
+            # --- DYNAMIC POSITION LOGIC (adjusted for object's start_time) ---
+            def make_pos_func(oid, stages_list, dur_per_stage, style, obj_start_time, first_idx):
                 def pos(t):
+                    # Adjust t to be relative to the full video timeline
+                    global_t = t + obj_start_time
+                    
                     # A. Base Keyframe Interpolation
-                    segment_idx = int(t // dur_per_stage)
+                    segment_idx = int(global_t // dur_per_stage)
                     
                     if segment_idx >= len(stages_list) - 1:
                         last_state = get_obj_state(stages_list[-1], oid)
                         base_x, base_y = get_pos(last_state) if last_state else (-1000, -1000)
                     else:
-                        segment_t = t % dur_per_stage
+                        segment_t = global_t % dur_per_stage
                         progress = segment_t / dur_per_stage
                         
                         start_state = get_obj_state(stages_list[segment_idx], oid)
@@ -164,32 +190,21 @@ def main():
                         else:
                              base_x, base_y = (-1000, -1000)
 
-                    # B. Apply Entrance Animation (Offset)
-                    if t < dur_per_stage: # During first stage
-                        prog = t / dur_per_stage
+                    # B. Apply Entrance Animation (only during first stage of this object)
+                    time_in_first_stage = global_t - (first_idx * dur_per_stage)
+                    if time_in_first_stage >= 0 and time_in_first_stage < dur_per_stage:
+                        prog = time_in_first_stage / dur_per_stage
                         eased_prog = ease_out_cubic(prog)
                         
                         if style == "slide_from_bottom":
-                             # Slide from bottom OF SCREEN
-                             # start_y should be just offscreen
                              start_y_off = VIDEO_SIZE[1] + 100
-                             
-                             # We interpolate from 'start_y_off' to 'base_y'
-                             # Note: base_y is already moving if there is stage0->stage1 movement!
-                             # But here we assume Entrance dominates.
-                             # Actually, let's just add an offset that decays?
-                             # Offset = (Start - Target) * (1-eased)
-                             # No, that's complex. Let's stick to interpolation.
-                             
-                             s0 = get_obj_state(stages_list[0], oid)
+                             s0 = get_obj_state(stages_list[first_idx], oid)
                              target_x, target_y = get_pos(s0) if s0 else (base_x, base_y)
-                             
-                             # Interpolate Y
                              current_y = start_y_off + (target_y - start_y_off) * eased_prog
                              return (base_x, int(current_y)) 
                              
                         elif style == "slide_from_side":
-                            s0 = get_obj_state(stages_list[0], oid)
+                            s0 = get_obj_state(stages_list[first_idx], oid)
                             target_x, target_y = get_pos(s0) if s0 else (base_x, base_y)
                             
                             if target_x > VIDEO_SIZE[0] / 2:
@@ -204,16 +219,18 @@ def main():
                 return pos
 
             # Apply Position
-            img_clip = img_clip.with_position(make_pos_func(obj_id, stages, TRANSITION_DURATION, anim_style))
+            img_clip = img_clip.with_position(make_pos_func(obj_id, stages, TRANSITION_DURATION, anim_style, start_time, first_stage_idx))
             
-            # Apply Opacity/Scale Effects
-            if anim_style == "fade_in":
-                img_clip = img_clip.with_effects([vfx.CrossFadeIn(TRANSITION_DURATION)])
-            elif anim_style == "wipe_reveal":
-                img_clip = img_clip.with_effects([vfx.CrossFadeIn(TRANSITION_DURATION)])
+            # Apply Fade Effects
+            fade_duration = min(0.5, obj_duration / 2)
+            if anim_style == "fade_in" or anim_style == "wipe_reveal":
+                img_clip = img_clip.with_effects([vfx.CrossFadeIn(fade_duration)])
+            
+            # Apply fade out if object disappears before video ends
+            if last_stage_idx < len(stages) - 1:
+                img_clip = img_clip.with_effects([vfx.CrossFadeOut(fade_duration)])
 
-            img_clip = img_clip.with_duration(total_duration)
-            img_clip = img_clip.with_start(0)
+            img_clip = img_clip.with_start(start_time)
 
             clips.append(img_clip)
 

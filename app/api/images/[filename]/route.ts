@@ -6,9 +6,9 @@ import { existsSync } from 'fs'
 
 export async function GET(
     request: Request,
-    { params }: { params: { filename: string } }
+    { params }: { params: Promise<{ filename: string }> }
 ) {
-    const filename = params.filename
+    const { filename } = await params
     const filePath = path.join(process.cwd(), 'local_assets', filename)
 
     if (!existsSync(filePath)) {
