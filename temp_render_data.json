@@ -1,0 +1,122 @@
+{
+  "version": "1.0",
+  "exportedAt": "2026-01-30T07:21:56.961Z",
+  "artboard": {
+    "width": 360,
+    "height": 640
+  },
+  "stages": [
+    {
+      "id": "stage-1769757621331",
+      "name": "Initial",
+      "assets": [
+        {
+          "id": "placed-1769757628313-ncif0ceg5",
+          "assetUrl": "blob:http://localhost:3000/2a128951-ed3a-42e7-941e-6c37a0796caa",
+          "filename": "Hand C.png",
+          "position": {
+            "x": 120,
+            "y": 260
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 0
+        },
+        {
+          "id": "placed-1769757628631-r0y26dn5s",
+          "assetUrl": "blob:http://localhost:3000/881da44f-7c53-4d80-a99a-792f39ddaf7e",
+          "filename": "Hand A.png",
+          "position": {
+            "x": 120,
+            "y": 260
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 1
+        },
+        {
+          "id": "placed-1769757629764-spg0z6dnm",
+          "assetUrl": "blob:http://localhost:3000/a4821888-e2b5-4589-93cc-841054b2bc4c",
+          "filename": "DS 6.0 - zone highlight.png",
+          "position": {
+            "x": 120,
+            "y": 260
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 2
+        }
+      ]
+    },
+    {
+      "id": "stage-1769757714208",
+      "name": "Initial (copy)",
+      "assets": [
+        {
+          "id": "placed-1769757714208-xdsuig460",
+          "assetUrl": "blob:http://localhost:3000/2a128951-ed3a-42e7-941e-6c37a0796caa",
+          "filename": "Hand C.png",
+          "position": {
+            "x": 120,
+            "y": 260
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 0
+        },
+        {
+          "id": "placed-1769757714208-437bcqdbq",
+          "assetUrl": "blob:http://localhost:3000/881da44f-7c53-4d80-a99a-792f39ddaf7e",
+          "filename": "Hand A.png",
+          "position": {
+            "x": 113,
+            "y": 390
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 1
+        },
+        {
+          "id": "placed-1769757714208-ejw5e8szu",
+          "assetUrl": "blob:http://localhost:3000/a4821888-e2b5-4589-93cc-841054b2bc4c",
+          "filename": "DS 6.0 - zone highlight.png",
+          "position": {
+            "x": 122,
+            "y": 70
+          },
+          "size": {
+            "width": 120,
+            "height": 120
+          },
+          "rotation": 0,
+          "layerOrder": 2
+        }
+      ]
+    },
+    {
+      "id": "stage-1769757647126",
+      "name": "Stage 2",
+      "assets": []
+    },
+    {
+      "id": "stage-1769757648868",
+      "name": "Stage 2 (copy)",
+      "assets": []
+    }
+  ]
+}

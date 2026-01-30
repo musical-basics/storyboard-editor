@@ -9,9 +9,23 @@ from moviepy.video.fx import Resize
 # CONFIGURATION
 # ==========================================
 
-JSON_FILE = "../storyboard_data.json"
-ASSETS_DIR = "../assets" # Where your image files are
-OUTPUT_FILE = "final_render.mp4"
+import argparse
+import sys
+
+# Define defaults
+DEFAULT_JSON_FILE = "../storyboard_data.json"
+DEFAULT_OUTPUT_FILE = "final_render.mp4"
+ASSETS_DIR = "../assets"
+
+# Parse arguments
+parser = argparse.ArgumentParser(description='Render storyboard video.')
+parser.add_argument('--input', type=str, default=DEFAULT_JSON_FILE, help='Path to input JSON file')
+parser.add_argument('--output', type=str, default=DEFAULT_OUTPUT_FILE, help='Path to output MP4 file')
+args = parser.parse_args()
+
+JSON_FILE = args.input
+OUTPUT_FILE = args.output
+
 TRANSITION_DURATION = 2.0 # Seconds between keys
 FPS = 30
 

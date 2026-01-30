@@ -3,6 +3,8 @@
 import React from "react"
 
 import { useCallback, useState, useRef } from "react"
+import { Play, Loader2, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { AssetLibrary } from "./asset-library"
 import { Canvas } from "./canvas"
 import { Timeline } from "./timeline"
@@ -76,6 +78,8 @@ export function StoryboardEditor() {
     }
   })
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
+  const [isRendering, setIsRendering] = useState(false)
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null)
 
   const activeStage = storyboard.stages.find(
     (s) => s.id === storyboard.activeStageId
@@ -275,6 +279,58 @@ export function StoryboardEditor() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+    URL.revokeObjectURL(url)
+  }, [storyboard])
+
+  const handleGenerateVideo = useCallback(async () => {
+    setIsRendering(true)
+    setGeneratedVideoUrl(null)
+
+    // Prepare export data (same as export)
+    const exportData = {
+      version: "1.0",
+      exportedAt: new Date().toISOString(),
+      artboard: {
+        width: 360,
+        height: 640,
+      },
+      stages: storyboard.stages.map((stage) => ({
+        id: stage.id,
+        name: stage.name,
+        assets: stage.placedAssets.map((asset) => ({
+          id: asset.id,
+          assetUrl: asset.assetUrl,
+          filename: asset.filename,
+          position: { x: asset.x, y: asset.y },
+          size: { width: asset.width, height: asset.height },
+          rotation: asset.rotation,
+          layerOrder: asset.layerOrder,
+          animationStyle: asset.animationStyle, // Ensure this is included
+        })),
+      })),
+    }
+
+    try {
+      const response = await fetch('/api/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(exportData),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setGeneratedVideoUrl(`${data.videoUrl}?t=${Date.now()}`) // Cache bust
+      } else {
+        console.error("Render failed:", data.error)
+        alert(`Render failed: ${data.error}`)
+      }
+    } catch (error) {
+      console.error("Render error:", error)
+      alert("Render failed. Check console.")
+    } finally {
+      setIsRendering(false)
+    }
   }, [storyboard])
 
   const handleRemoveAssetFromLibrary = useCallback((id: string) => {
@@ -305,11 +361,26 @@ export function StoryboardEditor() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-            Delete
-          </kbd>
-          <span>to remove selected</span>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={handleGenerateVideo}
+            disabled={isRendering}
+            className="gap-2"
+          >
+            {isRendering ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Play className="size-4 fill-current" />
+            )}
+            {isRendering ? "Rendering..." : "Generate Video"}
+          </Button>
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
+              Delete
+            </kbd>
+            <span>to remove selected</span>
+          </div>
         </div>
       </header>
 
@@ -354,6 +425,32 @@ export function StoryboardEditor() {
         onExport={handleExport}
         storyboard={storyboard}
       />
+
+      {/* Video Preview Modal */}
+      {generatedVideoUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-lg bg-background shadow-lg">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <h3 className="font-semibold">Rendered Video</h3>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setGeneratedVideoUrl(null)}
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+            <div className="bg-black p-4">
+              <video
+                src={generatedVideoUrl}
+                controls
+                autoPlay
+                className="max-h-[70vh] w-auto rounded"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
