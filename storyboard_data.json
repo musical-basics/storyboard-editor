@@ -1,0 +1,50 @@
+{
+    "version": "1.0",
+    "exportedAt": "2026-01-30T00:00:00.000Z",
+    "artboard": {
+        "width": 360,
+        "height": 640
+    },
+    "stages": [
+        {
+            "id": "stage-seed-1",
+            "name": "Start",
+            "assets": [
+                {
+                    "id": "obj-1",
+                    "filename": "example.png",
+                    "position": {
+                        "x": 130,
+                        "y": 500
+                    },
+                    "size": {
+                        "width": 100,
+                        "height": 100
+                    },
+                    "rotation": 0,
+                    "layerOrder": 0
+                }
+            ]
+        },
+        {
+            "id": "stage-seed-2",
+            "name": "End",
+            "assets": [
+                {
+                    "id": "obj-1",
+                    "filename": "example.png",
+                    "position": {
+                        "x": 130,
+                        "y": 200
+                    },
+                    "size": {
+                        "width": 100,
+                        "height": 100
+                    },
+                    "rotation": 0,
+                    "layerOrder": 0
+                }
+            ]
+        }
+    ]
+}

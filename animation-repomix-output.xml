@@ -1,0 +1,828 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: venv/**, **/__pycache__/**, Individual Assets For Animation/**, *.mp4, *.png, *.jpg, .DS_Store, .git/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+animate.py
+editor.html
+render.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="animate.py">
+from moviepy import *
+import moviepy.video.fx as vfx
+from moviepy.video.VideoClip import ImageClip
+from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+import os
+
+# ==========================================
+# CONFIGURATION
+# ==========================================
+
+# Directory containing your images
+ASSETS_DIR = "Individual Assets For Animation"
+
+# Output settings
+OUTPUT_FILENAME = "animation_v1.mp4"
+FPS = 30
+VIDEO_SIZE = (1920, 1080) # Update if your background is different
+DURATION = 5 # Total duration in seconds (adjust as needed)
+
+# ==========================================
+# HELPER FUNCTIONS
+# ==========================================
+
+def slide_in_from_bottom(clip, final_pos, duration=1.0, start_time=0):
+    """
+    Slides a clip in from the bottom of the screen to its final position.
+    """
+    w, h = clip.size
+    final_x, final_y = final_pos
+    
+    # Start position: same X, but below the screen
+    start_y = VIDEO_SIZE[1] 
+    
+    # Animation function for position
+    def pos_anim(t):
+        if t < duration:
+            return (final_x, start_y + (final_y - start_y) * (t / duration))
+        else:
+            return (final_x, final_y)
+            
+    return (clip.with_position(pos_anim)
+                .with_start(start_time)
+                .with_duration(DURATION - start_time))
+
+def fade_and_slide_down(clip, final_pos, duration=1.0, start_time=0):
+    """
+    Fades in while sliding down slightly to the final position.
+    """
+    final_x, final_y = final_pos
+    start_y = final_y - 50 # Start 50 pixels higher
+    
+    # Position animation
+    def pos_anim(t):
+        if t < duration:
+            return (final_x, start_y + (final_y - start_y) * (t / duration))
+        else:
+            return (final_x, final_y)
+    
+    return (clip.with_position(pos_anim)
+                .with_effects([vfx.CrossFadeIn(duration)])
+                .with_start(start_time)
+                .with_duration(DURATION - start_time))
+
+def slide_in_hand(clip, final_pos, duration=1.0, start_time=0):
+    """
+    Slides a hand in from off-screen (bottom-rightish) to position.
+    """
+    final_x, final_y = final_pos
+    w, h = clip.size
+    
+    # Start position: off screen bottom-right
+    start_x = VIDEO_SIZE[0]
+    start_y = VIDEO_SIZE[1]
+    
+    def pos_anim(t):
+        if t < duration:
+            return (start_x + (final_x - start_x) * (t / duration),
+                    start_y + (final_y - start_y) * (t / duration))
+        else:
+            return (final_x, final_y)
+    
+    return (clip.with_position(pos_anim)
+                .with_start(start_time)
+                .with_duration(DURATION - start_time))
+
+# ==========================================
+# ASSET SETUP
+# ==========================================
+
+def create_animation():
+    print("Loading assets...")
+    
+    # 1. Background
+    bg_path = os.path.join(ASSETS_DIR, "Studio Background.png")
+    bg = ImageClip(bg_path).with_duration(DURATION)
+    # Resize background to fit video size if needed
+    # bg = bg.with_effects([vfx.Resize(newsize=VIDEO_SIZE)])
+    
+    clips = [bg]
+
+    # 2. Keyboards (Slide in from bottom)
+    # TODO: Update (x, y) coordinates for each keyboard
+    keyboards = [
+        {"file": "DS 5.5.png", "pos": (100, 300), "start": 0.5},
+        {"file": "DS 6.0.png", "pos": (100, 500), "start": 1.0},
+        {"file": "DS 6.5.png", "pos": (100, 700), "start": 1.5},
+    ]
+
+    for item in keyboards:
+        path = os.path.join(ASSETS_DIR, item["file"])
+        if os.path.exists(path):
+            clip = ImageClip(path)
+            # Ensure clip has duration before applying effects that might need it
+            clip = clip.with_duration(DURATION - item["start"])
+            anim_clip = slide_in_from_bottom(clip, item["pos"], duration=1.0, start_time=item["start"])
+            clips.append(anim_clip)
+        else:
+            print(f"Warning: File not found {path}")
+
+    # 3. Highlights / Titles (Fade + Slide Down)
+    # TODO: Update (x, y) coordinates
+    highlights = [
+        {"file": "DS 5.5 - zone highlight.png", "pos": (100, 300), "start": 2.0},
+        {"file": "DS 6.0 - zone highlight.png", "pos": (100, 500), "start": 2.2},
+        {"file": "DS 6.5 - zone highlight.png", "pos": (100, 700), "start": 2.4},
+    ]
+
+    for item in highlights:
+        path = os.path.join(ASSETS_DIR, item["file"])
+        if os.path.exists(path):
+            clip = ImageClip(path)
+            clip = clip.with_duration(DURATION - item["start"])
+            anim_clip = fade_and_slide_down(clip, item["pos"], duration=0.8, start_time=item["start"])
+            clips.append(anim_clip)
+
+    # 4. Hands (Slide in)
+    # TODO: Update (x, y) coordinates
+    hands = [
+        {"file": "Hand A.png", "pos": (500, 300), "start": 3.0},
+        {"file": "Hand B.png", "pos": (500, 500), "start": 3.2},
+        {"file": "Hand C.png", "pos": (500, 700), "start": 3.4},
+    ]
+
+    for item in hands:
+        path = os.path.join(ASSETS_DIR, item["file"])
+        if os.path.exists(path):
+            clip = ImageClip(path)
+            clip = clip.with_duration(DURATION - item["start"])
+            anim_clip = slide_in_hand(clip, item["pos"], duration=0.8, start_time=item["start"])
+            clips.append(anim_clip)
+
+    # ==========================================
+    # RENDER
+    # ==========================================
+    print("Compositing video...")
+    final_video = CompositeVideoClip(clips, size=VIDEO_SIZE)
+    
+    print(f"Writing output to {OUTPUT_FILENAME}...")
+    final_video.write_videofile(OUTPUT_FILENAME, fps=FPS)
+    print("Done!")
+
+if __name__ == "__main__":
+    create_animation()
+</file>
+
+<file path="editor.html">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storyboard Editor</title>
+    <script src="https://unpkg.com/konva@9/konva.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #2c2c2c;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Sidebar (Asset Library) */
+        #sidebar {
+            width: 250px;
+            background-color: #3a3a3a;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #444;
+            overflow-y: auto;
+        }
+
+        #sidebar h2 { margin-top: 0; font-size: 1.2rem; }
+        
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            border: 1px solid #555;
+            color: white;
+            background-color: #4a4a4a;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .asset-thumbnail {
+            margin-bottom: 15px;
+            cursor: grab;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            background: #222;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .asset-thumbnail:hover { border-color: #0088cc; }
+        
+        .asset-thumbnail img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .asset-name {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Main Workspace */
+        #workspace {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #222;
+        }
+
+        #canvas-stage {
+            background-color: white; /* Video background color */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Timeline / Bottom Bar */
+        #bottom-bar {
+            height: 60px;
+            width: 100%;
+            background-color: #3a3a3a;
+            border-top: 1px solid #444;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .timeline-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stage-indicator {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 15px;
+            background: #222;
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        .primary-btn {
+            background-color: #0088cc;
+            border-color: #0077b3;
+        }
+        .primary-btn:hover { background-color: #0099e6; }
+
+        .delete-btn {
+            background-color: #cc3300;
+            border-color: #b32d00;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <h2>Assets</h2>
+        <div class="upload-btn-wrapper">
+            <button class="btn">Upload Images</button>
+            <input type="file" id="file-input" multiple accept="image/*" />
+        </div>
+        <div id="asset-list">
+            <!-- Thumbnails go here -->
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE -->
+    <div id="workspace">
+        <div id="canvas-stage"></div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div id="bottom-bar">
+        <!-- Center controls for timeline -->
+        <div class="timeline-controls" style="margin-left: 250px;"> <!-- Offset for sidebar -->
+            <button class="btn" id="prev-btn">◀ Previous</button>
+            <span class="stage-indicator" id="stage-display">Stage 1 of 1</span>
+            <button class="btn" id="next-btn">Next ▶</button>
+            <div style="width: 20px;"></div>
+            <button class="btn primary-btn" id="add-stage-btn">+ Add Next Stage</button>
+        </div>
+
+        <div class="timeline-controls">
+            <button class="btn" onclick="saveData()">Save JSON</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // STATE MANAGEMENT
+        // ==========================================
+        
+        // Setup Canvas
+        // 16:9 Aspect Ratio (e.g., 1080p scaled down)
+        // Let's use 1920x1080 scaled by 0.4 -> 768 x 432
+        // Or vertical 9:16 as requested? "aspect ratio 9:16"
+        // 1080x1920 scaled down by 0.35 -> 378 x 672
+        const SCALER = 0.4;
+        const STAGE_WIDTH = 1080 * SCALER;
+        const STAGE_HEIGHT = 1920 * SCALER;
+
+        const stage = new Konva.Stage({
+            container: 'canvas-stage',
+            width: STAGE_WIDTH,
+            height: STAGE_HEIGHT,
+        });
+
+        const layer = new Konva.Layer();
+        stage.add(layer);
+
+        // Transformer for resizing
+        const tr = new Konva.Transformer();
+        layer.add(tr);
+
+        // Selection logic
+        stage.on('click tap', function (e) {
+            // if click on empty area - remove all selections
+            if (e.target === stage) {
+                tr.nodes([]);
+                return;
+            }
+
+            // do nothing if clicked NOT on our rectangles
+            if (!e.target.hasName('object')) {
+                return;
+            }
+
+            // currently selected
+            const nodes = tr.nodes();
+            const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
+            
+            if (!metaPressed && !nodes.includes(e.target)) {
+                tr.nodes([e.target]);
+            } else if (metaPressed && !nodes.includes(e.target)) {
+                const newNodes = nodes.concat([e.target]);
+                tr.nodes(newNodes);
+            }
+        });
+
+        // App State
+        let stages = [ [] ]; // Array of arrays of object states
+        let currentStageIndex = 0;
+        let assets = {}; // filename -> HTMLImageElement
+
+        // ==========================================
+        // ASSET HANDLING
+        // ==========================================
+        
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const files = e.target.files;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        // Add to assets map
+                        assets[file.name] = img;
+                        createAssetThumbnail(file.name, img.src);
+                    }
+                }
+                
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function createAssetThumbnail(name, src) {
+            const container = document.getElementById('asset-list');
+            
+            const div = document.createElement('div');
+            div.className = 'asset-thumbnail';
+            div.draggable = true;
+            
+            const imgEl = document.createElement('img');
+            imgEl.src = src;
+            
+            const nameEl = document.createElement('div');
+            nameEl.className = 'asset-name';
+            nameEl.innerText = name;
+            
+            div.appendChild(imgEl);
+            div.appendChild(nameEl);
+            container.appendChild(div);
+
+            // Drag Events
+            div.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('assetName', name);
+            });
+        }
+
+        // Drop on Canvas
+        const container = stage.container();
+        container.addEventListener('dragover', (e) => { e.preventDefault(); });
+        
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            stage.setPointersPositions(e);
+            
+            const assetName = e.dataTransfer.getData('assetName');
+            const imgObj = assets[assetName];
+            
+            if (imgObj) {
+                const pos = stage.getPointerPosition();
+                createKonvaImage(imgObj, assetName, pos.x, pos.y);
+                saveCurrentStageState(); // Auto-save on add
+            }
+        });
+
+        // ==========================================
+        // KONVA OBJECTS
+        // ==========================================
+
+        function createKonvaImage(imgObj, name, x, y, options = {}) {
+            // Generate unique ID if not provided
+            const id = options.id || 'obj_' + Date.now() + Math.random().toString(36).substr(2, 9);
+            
+            const konvaImg = new Konva.Image({
+                x: x,
+                y: y,
+                image: imgObj,
+                width: options.width || imgObj.width * 0.2, // Default scale down a bit
+                height: options.height || (imgObj.height * (options.width ? options.width/imgObj.width : 0.2)),
+                rotation: options.rotation || 0,
+                name: 'object',
+                id: id,
+                draggable: true,
+                filename: name // Custom attribute to track source
+            });
+
+            layer.add(konvaImg);
+            
+            // Add event listeners for state updates
+            konvaImg.on('dragend transformend', () => {
+                saveCurrentStageState();
+            });
+
+            // Select it immediately
+            tr.nodes([konvaImg]);
+        }
+
+        // ==========================================
+        // STAGE LOGIC
+        // ==========================================
+
+        function saveCurrentStageState() {
+            // Serialize all objects on layer
+            const state = [];
+            layer.find('.object').forEach(node => {
+                state.push({
+                    id: node.id(),
+                    filename: node.attrs.filename,
+                    x: node.x(),
+                    y: node.y(),
+                    width: node.width() * node.scaleX(), // Baking scale into width
+                    height: node.height() * node.scaleY(),
+                    rotation: node.rotation()
+                });
+            });
+            stages[currentStageIndex] = state;
+        }
+
+        function loadStage(index) {
+            // clear layer
+            layer.find('.object').forEach(node => node.destroy());
+            tr.nodes([]);
+            
+            const stageData = stages[index];
+            if (!stageData) return;
+
+            stageData.forEach(item => {
+                const imgObj = assets[item.filename];
+                if (imgObj) {
+                    createKonvaImage(imgObj, item.filename, item.x, item.y, {
+                        id: item.id,
+                        width: item.width,
+                        height: item.height,
+                        rotation: item.rotation
+                    });
+                } else {
+                    console.warn("Asset not loaded yet:", item.filename);
+                }
+            });
+            
+            currentStageIndex = index;
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('stage-display').innerText = `Stage ${currentStageIndex + 1} of ${stages.length}`;
+            document.getElementById('prev-btn').disabled = currentStageIndex === 0;
+            document.getElementById('next-btn').disabled = currentStageIndex === stages.length - 1;
+        }
+
+        // Controls
+        document.getElementById('add-stage-btn').addEventListener('click', () => {
+            // Deep copy current stage to new stage
+            saveCurrentStageState();
+            const currentData = JSON.parse(JSON.stringify(stages[currentStageIndex]));
+            
+            // Insert after current
+            stages.splice(currentStageIndex + 1, 0, currentData);
+            currentStageIndex++;
+            
+            loadStage(currentStageIndex);
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentStageIndex > 0) loadStage(currentStageIndex - 1);
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentStageIndex < stages.length - 1) loadStage(currentStageIndex + 1);
+        });
+
+        // ==========================================
+        // EXPORT
+        // ==========================================
+        
+        window.saveData = function() {
+            saveCurrentStageState(); // Ensure latest changes are saved
+            
+            const data = {
+                resolution: { width: 1080, height: 1920 }, // Original 1080p vertical
+                stages: stages.map(stageObjects => {
+                    // We need to un-scale the coordinates back to full resolution
+                    // Editor is working at SCALER (0.4)
+                    return stageObjects.map(obj => ({
+                        ...obj,
+                        x: obj.x / SCALER,
+                        y: obj.y / SCALER,
+                        width: obj.width / SCALER,
+                        height: obj.height / SCALER
+                    }));
+                })
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "animation_data.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+        
+        // Initial UI
+        updateUI();
+
+    </script>
+</body>
+</html>
+</file>
+
+<file path="render.py">
+import json
+import os
+from moviepy import *
+from moviepy.video.VideoClip import ImageClip
+from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+from moviepy.video.fx import Resize
+
+# ==========================================
+# CONFIGURATION
+# ==========================================
+
+JSON_FILE = "animation_data.json"
+ASSETS_DIR = "Individual Assets For Animation" # Where your image files are
+OUTPUT_FILE = "final_render.mp4"
+TRANSITION_DURATION = 2.0 # Seconds between keys
+FPS = 30
+
+def get_obj_state(stage_data, obj_id):
+    """Find object data by ID in a specific stage list."""
+    for item in stage_data:
+        if item["id"] == obj_id:
+            return item
+    return None
+
+def main():
+    if not os.path.exists(JSON_FILE):
+        print(f"Error: {JSON_FILE} not found. Export it from editor.html first.")
+        return
+
+    with open(JSON_FILE, 'r') as f:
+        data = json.load(f)
+
+    stages = data['stages']
+    if not stages:
+        print("No stages found in JSON.")
+        return
+
+    # Video Resolution from JSON or default
+    res = data.get('resolution', {'width': 1080, 'height': 1920})
+    VIDEO_SIZE = (res['width'], res['height'])
+    
+    # Collect all unique objects across all stages
+    all_obj_ids = set()
+    for stage in stages:
+        for obj in stage:
+            all_obj_ids.add(obj['id'])
+
+    clips = []
+    
+    # Create background (White default, or use an image if you add one to editor)
+    # Using a simple color background for now
+    total_duration = (len(stages) - 1) * TRANSITION_DURATION
+    # If there's only 1 stage, just show it for 2 seconds
+    if total_duration == 0: total_duration = 2.0
+    
+    bg = ColorClip(size=VIDEO_SIZE, color=(255, 255, 255)).with_duration(total_duration)
+    clips.append(bg)
+
+    print(f"Processing {len(all_obj_ids)} objects across {len(stages)} stages...")
+
+    for obj_id in all_obj_ids:
+        # 1. Find the first occurrence (filename)
+        first_state = None
+        for s in stages:
+            state = get_obj_state(s, obj_id)
+            if state:
+                first_state = state
+                break
+        
+        if not first_state: continue
+
+        filename = first_state['filename']
+        path = os.path.join(ASSETS_DIR, filename)
+        
+        if not os.path.exists(path):
+            print(f"Warning: Asset {filename} not found at {path}")
+            continue
+
+        # Load image
+        img_clip = ImageClip(path)
+
+        # We need to define dynamic position and size functions
+        # We will iterate through time segments: 
+        # T=0 to T=2 is Stage 0 -> Stage 1
+        # T=2 to T=4 is Stage 1 -> Stage 2
+        
+        def make_pos_func(oid, stages_list, dur_per_stage):
+            def pos(t):
+                # Which segment are we in?
+                segment_idx = int(t // dur_per_stage)
+                if segment_idx >= len(stages_list) - 1:
+                    # After last keyframe, hold last position
+                    state = get_obj_state(stages_list[-1], oid)
+                    return (state['x'], state['y']) if state else (0,0) # Should be offscreen if missing?
+                
+                # Progress within this segment (0.0 to 1.0)
+                segment_t = t % dur_per_stage
+                progress = segment_t / dur_per_stage
+
+                start_state = get_obj_state(stages_list[segment_idx], oid)
+                end_state = get_obj_state(stages_list[segment_idx+1], oid)
+
+                # Interpolation logic:
+                # If object exists in both: Interpolate
+                # If object only in Start: Hold? Fade out? (Let's stick to simple hold for now)
+                # If object only in End: Jump to start pos? (Ideally should have existed before)
+                
+                if start_state and end_state:
+                    x = start_state['x'] + (end_state['x'] - start_state['x']) * progress
+                    y = start_state['y'] + (end_state['y'] - start_state['y']) * progress
+                    return (x, y)
+                elif start_state:
+                    return (start_state['x'], start_state['y'])
+                elif end_state:
+                    return (end_state['x'], end_state['y'])
+                else:
+                    return (-1000, -1000) # Offscreen
+            return pos
+
+        # NOTE: MoviePy ImageClip resize is expensive to do dynamically per frame.
+        # Ideally, we calculate scale too.
+        # Simplification: We will use the 'width' from the first valid state and keep it constant 
+        # OR attempt to animate zoom. Animating zoom (resize) in MoviePy is very slow.
+        # Pro tip: Better to let 'pos' handle movement and ignore resize for v1 unless critical.
+        # But the editor allows resizing. Let's try to support static resize based on first appearance.
+        
+        # Fixed scale strategy: Use size from first appearance
+        # Refined strategy: If size changes, that's a zoom.
+        
+        # Because dynamic resize is heavy, let's pre-resize the clip to its MAX needed size 
+        # if possible, but that's complex.
+        # Let's just set the size based on the first keyframe found and stick to it for now
+        # to ensure it renders quickly.
+        
+        base_w = first_state['width']
+        base_h = first_state['height']
+        
+        # Resize once
+        img_clip = img_clip.with_effects([Resize(newsize=(base_w, base_h))])
+        
+        # Apply Position Animation
+        img_clip = img_clip.with_position(make_pos_func(obj_id, stages, TRANSITION_DURATION))
+        img_clip = img_clip.with_duration(total_duration)
+        img_clip = img_clip.with_start(0) # Always start at 0, handle visibility via pos
+
+        clips.append(img_clip)
+
+    print("Compositing...")
+    final = CompositeVideoClip(clips, size=VIDEO_SIZE)
+    
+    print(f"Rendering to {OUTPUT_FILE} ({total_duration}s)...")
+    final.write_videofile(OUTPUT_FILE, fps=FPS)
+    print("Done!")
+
+if __name__ == "__main__":
+    main()
+</file>
+
+</files>
