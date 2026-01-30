@@ -69,14 +69,53 @@ const createInitialStage = (): Stage => ({
 
 export function StoryboardEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [assets, setAssets] = useState<Asset[]>(SAMPLE_ASSETS)
+  const [assets, setAssets] = useState<Asset[]>([])
+
+  // Hydration fix for localStorage
+  const [isMounted, setIsMounted] = useState(false)
+
   const [storyboard, setStoryboard] = useState<Storyboard>(() => {
+    // Initial State (will be overwritten by useEffect)
     const initialStage = createInitialStage()
     return {
       stages: [initialStage],
       activeStageId: initialStage.id,
     }
   })
+
+  // 1. Load from localStorage on mount
+  React.useEffect(() => {
+    setIsMounted(true)
+    const savedStoryboard = localStorage.getItem("storyboard-state")
+    if (savedStoryboard) {
+      try {
+        setStoryboard(JSON.parse(savedStoryboard))
+      } catch (e) { console.error("Failed to load storyboard", e) }
+    }
+
+    const savedAssets = localStorage.getItem("storyboard-assets")
+    if (savedAssets) {
+      try {
+        setAssets(JSON.parse(savedAssets))
+      } catch (e) {
+        setAssets(SAMPLE_ASSETS) // Fallback
+      }
+    } else {
+      setAssets(SAMPLE_ASSETS)
+    }
+  }, [])
+
+  // 2. Save to localStorage on change
+  React.useEffect(() => {
+    if (!isMounted) return
+    localStorage.setItem("storyboard-state", JSON.stringify(storyboard))
+  }, [storyboard, isMounted])
+
+  React.useEffect(() => {
+    if (!isMounted) return
+    localStorage.setItem("storyboard-assets", JSON.stringify(assets))
+  }, [assets, isMounted])
+
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
   const [isRendering, setIsRendering] = useState(false)
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null)
@@ -119,23 +158,47 @@ export function StoryboardEditor() {
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
 
-    Array.from(files).forEach((file) => {
+    const newAssets: Asset[] = []
+
+    for (const file of Array.from(files)) {
       if (file.type.startsWith("image/")) {
-        const url = URL.createObjectURL(file)
-        const newAsset: Asset = {
-          id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          url,
-          name: file.name.replace(/\.[^/.]+$/, ""),
-          filename: file.name,
-          thumbnail: url,
+        // Prepare FormData
+        const formData = new FormData()
+        formData.append('file', file)
+
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          })
+          const data = await res.json()
+
+          if (data.success) {
+            const newAsset: Asset = {
+              id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              url: data.url, // /api/images/filename.png
+              name: file.name.replace(/\.[^/.]+$/, ""),
+              filename: data.filename, // The actual saved filename
+              thumbnail: data.url,
+            }
+            newAssets.push(newAsset)
+          } else {
+            alert(`Upload failed: ${data.error}`)
+          }
+        } catch (err) {
+          console.error(err)
+          alert("Upload failed")
         }
-        setAssets((prev) => [...prev, newAsset])
       }
-    })
+    }
+
+    if (newAssets.length > 0) {
+      setAssets((prev) => [...prev, ...newAssets])
+    }
 
     e.target.value = ""
   }, [])
@@ -339,6 +402,11 @@ export function StoryboardEditor() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
+      {!isMounted && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background text-foreground">
+          Loading Local Workspace...
+        </div>
+      )}
       {/* Header */}
       <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4">
         <div className="flex items-center gap-3">
@@ -442,7 +510,7 @@ export function StoryboardEditor() {
             </div>
             <div className="bg-black p-4">
               <video
-                src={generatedVideoUrl}
+                src={generatedVideoUrl!}
                 controls
                 autoPlay
                 className="max-h-[70vh] w-auto rounded"
